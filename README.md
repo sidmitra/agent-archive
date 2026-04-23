@@ -9,10 +9,10 @@ Archive and browse agentic coding sessions. Parses agent session logs and genera
 ## Installation
 
 ```bash
-pip install -e .
+pip install agent-archive
 ```
 
-For development:
+For development (from a local clone):
 
 ```bash
 pip install -e ".[dev]"
