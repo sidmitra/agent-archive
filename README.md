@@ -8,6 +8,14 @@ Archive and browse agentic coding sessions. Parses agent session logs and genera
 
 ## Installation
 
+Install as a standalone CLI with [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv tool install agent-archive
+```
+
+Or with pip:
+
 ```bash
 pip install agent-archive
 ```
