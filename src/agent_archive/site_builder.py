@@ -1,5 +1,6 @@
 # src/agent_archive/site_builder.py
 import subprocess
+import sys
 from pathlib import Path
 
 import yaml
@@ -59,8 +60,7 @@ class SiteBuilder:
 
     def build(self) -> None:
         subprocess.run(
-            f"mkdocs build -f {self.config_path}",
-            shell=True,
+            [sys.executable, "-m", "mkdocs", "build", "-f", str(self.config_path)],
             check=True,
             cwd=self.output_dir,
         )
