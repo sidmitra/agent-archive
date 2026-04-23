@@ -1,6 +1,6 @@
 [project]
 name = "agent-archive"
-version = "0.1.0"
+version = "0.1.1"
 description = "Archive and browse agentic coding sessions"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -24,3 +24,8 @@ agent-archive = "agent_archive.cli:app"
 dev = [
     "pytest>=8.2.0"
 ]
+
+[tool.poe.tasks]
+build = { shell = "rm -rf dist/ && uv build" }
+publish-test = { shell = "uv publish --publish-url https://test.pypi.org/legacy/" }
+publish = "uv publish"
