@@ -14,6 +14,7 @@ class SiteBuilder:
 
     def generate_config(self) -> None:
         nav = self._build_nav()
+        self._write_tooltip_js()
 
         config = {
             "site_name": "Agent Archive",
@@ -23,6 +24,7 @@ class SiteBuilder:
                 "name": "dracula",
             },
             "plugins": ["search"],
+            "extra_javascript": ["js/nav-tooltips.js"],
             "use_directory_urls": False,
         }
         if nav:
@@ -65,6 +67,8 @@ class SiteBuilder:
         return title
 
     def _build_nav(self) -> list:
+        """Build nav list and collect tooltip mapping as a side effect."""
+        self._nav_tooltips: dict[str, str] = {}
         nav = []
         if not self.docs_dir.exists():
             return nav
@@ -81,12 +85,39 @@ class SiteBuilder:
                 if agent_dir.is_dir():
                     for session_file in sorted(agent_dir.glob("*.md")):
                         label = self._build_nav_label(session_file)
-                        month_items.append(
-                            {label: f"{month_dir.name}/{agent_dir.name}/{session_file.name}"}
-                        )
+                        rel_path = f"{month_dir.name}/{agent_dir.name}/{session_file.name}"
+                        month_items.append({label: rel_path})
+
+                        fm = self._parse_frontmatter(session_file)
+                        project = fm.get("project", "")
+                        if project:
+                            self._nav_tooltips[label] = project
             nav.append({month_dir.name: month_items})
 
         return nav
+
+    def _write_tooltip_js(self) -> None:
+        """Write a JS file that adds title attributes to nav links."""
+        import json
+
+        js_dir = self.docs_dir / "js"
+        js_dir.mkdir(parents=True, exist_ok=True)
+
+        tooltips = getattr(self, "_nav_tooltips", {})
+        (js_dir / "nav-tooltips.js").write_text(
+            f"""(function() {{
+  var tips = {json.dumps(tooltips)};
+  document.addEventListener('DOMContentLoaded', function() {{
+    document.querySelectorAll('nav a, .md-nav a, .sidebar a, [data-md-component="navigation"] a').forEach(function(a) {{
+      var text = a.textContent.trim();
+      if (tips[text]) {{
+        a.setAttribute('title', tips[text]);
+      }}
+    }});
+  }});
+}})();
+"""
+        )
 
     def build(self) -> None:
         subprocess.run(
