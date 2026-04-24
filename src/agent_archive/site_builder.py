@@ -20,12 +20,8 @@ class SiteBuilder:
             "docs_dir": str(self.docs_dir),
             "site_dir": str(self.output_dir / "site"),
             "theme": {
-                "name": "material",
-                "features": [
-                    "search.suggest",
-                    "search.highlight",
-                    "navigation.sections",
-                ],
+                "name": "terminal",
+                "palette": "gruvbox_dark",
             },
             "plugins": ["search"],
             "use_directory_urls": False,
