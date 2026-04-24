@@ -28,6 +28,7 @@ class SiteBuilder:
                 ],
             },
             "plugins": ["search"],
+            "use_directory_urls": False,
         }
         if nav:
             config["nav"] = nav
