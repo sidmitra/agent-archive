@@ -52,4 +52,5 @@ def test_render_writes_files(tmp_path):
 
     homepage = tmp_path / "docs" / "index.md"
     assert homepage.exists()
-    assert "Fix auth bug" in homepage.read_text()
+    assert "Agent Archive" in homepage.read_text()
+    assert "Claude Code" in homepage.read_text()  # agent display name appears in stats
