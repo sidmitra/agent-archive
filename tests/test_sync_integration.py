@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 from typer.testing import CliRunner
 from agent_archive.cli import app
+from agent_archive.state import _state_path
 
 
 runner = CliRunner()
@@ -35,5 +36,5 @@ def test_sync_creates_markdown(tmp_path):
     session_files = list((output_dir / "docs").rglob("*.md"))
     assert len(session_files) >= 2
 
-    state_file = output_dir / ".sync_state.json"
+    state_file = _state_path(output_dir)
     assert state_file.exists()

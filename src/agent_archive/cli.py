@@ -14,7 +14,7 @@ from .parsers.copilot import CopilotParser
 from .redactor import Redactor
 from .renderer import MarkdownRenderer
 from .site_builder import SiteBuilder
-from .state import SyncState
+from .state import SyncState, _state_path
 
 app = typer.Typer()
 
@@ -36,7 +36,7 @@ def sync(
     """Sync agent logs and build MkDocs site."""
     output.mkdir(parents=True, exist_ok=True)
 
-    state = SyncState(output / ".sync_state.json")
+    state = SyncState(_state_path(output))
 
     parsers = [
         ClaudeCodeParser(base_path=claude_path),

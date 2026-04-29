@@ -1,8 +1,16 @@
 # src/agent_archive/state.py
 import json
+import socket
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict
+
+
+def _state_path(output_dir: Path) -> Path:
+    """Return a per-machine state file path so shared output dirs (e.g. Dropbox)
+    don't cause every file to re-sync on every other machine."""
+    hostname = socket.gethostname().split(".")[0]  # strip domain suffix
+    return output_dir / f".sync_state.{hostname}.json"
 
 
 class SyncState:
