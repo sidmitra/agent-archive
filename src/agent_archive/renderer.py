@@ -9,6 +9,7 @@ from .models import Session
 
 AGENT_DISPLAY = {
     "claude_code": "Claude Code",
+    "gemini": "Gemini",
     "pi": "Pi",
     "opencode": "OpenCode",
     "copilot": "Copilot",

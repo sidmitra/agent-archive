@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from .parsers.claude_code import ClaudeCodeParser
+from .parsers.gemini import GeminiParser
 from .parsers.pi import PiParser
 from .parsers.opencode import OpencodeParser
 from .parsers.copilot import CopilotParser
@@ -30,6 +31,7 @@ def sync(
     claude_path: Optional[Path] = typer.Option(None, help="Override Claude Code log directory"),
     pi_path: Optional[Path] = typer.Option(None, help="Override pi agent log directory"),
     opencode_db: Optional[Path] = typer.Option(None, help="Override opencode database path"),
+    gemini_path: Optional[Path] = typer.Option(None, help="Override Gemini CLI session directory"),
     copilot_path: Optional[Path] = typer.Option(None, help="Override copilot log directory"),
     redact: bool = typer.Option(True, help="Redact secrets (tokens, API keys, env var values) before writing output"),
 ):
@@ -42,6 +44,7 @@ def sync(
         ClaudeCodeParser(base_path=claude_path),
         PiParser(base_path=pi_path),
         OpencodeParser(db_path=opencode_db),
+        GeminiParser(base_path=gemini_path),
         CopilotParser(base_path=copilot_path),
     ]
 

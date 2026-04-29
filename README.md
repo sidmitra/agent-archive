@@ -2,7 +2,7 @@
 
 Archive and browse agentic coding sessions. Parses session logs from multiple agents and generates a searchable MkDocs static site.
 
-**Supported agents:** Claude Code, Pi, OpenCode, GitHub Copilot
+**Supported agents:** Claude Code, Gemini CLI, Pi, OpenCode, GitHub Copilot
 
 ## Requirements
 
@@ -45,6 +45,7 @@ agent-archive sync --output ~/archive \
   --claude-path ~/.claude \
   --pi-path ~/.pi/agent \
   --opencode-db ~/.local/share/opencode/opencode.db \
+  --gemini-path ~/.gemini/tmp \
   --copilot-path ~/.copilot
 ```
 
@@ -107,6 +108,7 @@ src/agent_archive/
   parsers/
     base.py           # Abstract BaseParser
     claude_code.py
+    gemini.py
     pi.py
     opencode.py
     copilot.py
