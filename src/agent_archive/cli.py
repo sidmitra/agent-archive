@@ -1,4 +1,8 @@
 # src/agent_archive/cli.py
+import http.server
+import os
+import threading
+import webbrowser
 import typer
 from pathlib import Path
 from typing import Optional
@@ -73,6 +77,34 @@ def sync(
     typer.echo("Site built successfully")
 
     state.save()
+
+
+@app.command()
+def serve(
+    output: Path = typer.Option(..., help="Output directory used during sync"),
+    port: int = typer.Option(8000, help="Port to serve on"),
+    no_browser: bool = typer.Option(False, "--no-browser", help="Don't open a browser tab automatically"),
+):
+    """Serve the built site locally so search works (file:// doesn't support fetch)."""
+    site_dir = output / "site"
+    if not site_dir.exists():
+        typer.echo(f"Site directory not found: {site_dir}. Run 'sync' first.", err=True)
+        raise typer.Exit(1)
+
+    os.chdir(site_dir)
+    handler = http.server.SimpleHTTPRequestHandler
+    # silence the per-request log lines
+    handler.log_message = lambda *_: None  # type: ignore[method-assign]
+
+    with http.server.HTTPServer(("127.0.0.1", port), handler) as httpd:
+        url = f"http://127.0.0.1:{port}"
+        typer.echo(f"Serving {site_dir} at {url}  (Ctrl+C to stop)")
+        if not no_browser:
+            threading.Timer(0.3, lambda: webbrowser.open(url)).start()
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            typer.echo("\nStopped.")
 
 
 if __name__ == "__main__":
