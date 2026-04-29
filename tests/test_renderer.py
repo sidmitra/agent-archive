@@ -36,7 +36,58 @@ def test_render_session_page():
     assert "Fix the bug" in md
 
 
-def test_render_writes_files(tmp_path):
+def test_incremental_render_updates_homepage(tmp_path):
+    """Second render_all call with new sessions should include all sessions in homepage/index."""
+    renderer = MarkdownRenderer()
+
+    # First sync: one claude session
+    session1 = _make_session()  # claude_code, 2023-06
+    renderer.render_all([session1], tmp_path)
+
+    # Second sync: a new pi session from a different month
+    session2 = Session(
+        id="sess2",
+        agent_name="pi",
+        title="Refactor DB layer",
+        start_time=datetime(2023, 8, 1, 9, 0, tzinfo=timezone.utc),
+        messages=[
+            Message(role="user", content="refactor",
+                    token_usage={"input": 50, "output": 30}),
+        ],
+        model="claude-opus-4",
+    )
+    renderer.render_all([session2], tmp_path)
+
+    homepage = (tmp_path / "docs" / "index.md").read_text()
+
+    # Both agents must appear in the homepage stats
+    assert "Claude Code" in homepage
+    assert "Pi" in homepage
+
+    # Both month indices must exist
+    assert (tmp_path / "docs" / "2023-06" / "index.md").exists()
+    assert (tmp_path / "docs" / "2023-08" / "index.md").exists()
+
+
+def test_js_dir_not_in_nav(tmp_path):
+    """docs/js/ directory must not appear as a nav entry."""
+    from agent_archive.site_builder import SiteBuilder
+
+    docs_dir = tmp_path / "docs"
+    (docs_dir / "js").mkdir(parents=True)
+    (docs_dir / "js" / "nav-tooltips.js").write_text("// tooltip js")
+    (docs_dir / "index.md").write_text("# Home")
+    month_dir = docs_dir / "2023-06"
+    month_dir.mkdir()
+    (month_dir / "index.md").write_text("# June")
+
+    builder = SiteBuilder(tmp_path)
+    nav = builder._build_nav()
+
+    nav_keys = [list(item.keys())[0] for item in nav]
+    assert "js" not in nav_keys
+    assert "2023-06" in nav_keys
+
     renderer = MarkdownRenderer()
     sessions = [_make_session()]
     renderer.render_all(sessions, tmp_path)

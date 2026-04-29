@@ -1,10 +1,13 @@
 # src/agent_archive/renderer.py
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
+import re
 
-from .models import Session
+import yaml
+
+from .models import Message, Session
 
 
 AGENT_DISPLAY = {
@@ -255,24 +258,89 @@ class MarkdownRenderer:
         lines.append("")
         return "\n".join(lines)
 
+    def _session_from_frontmatter(self, filepath: Path) -> Optional[Session]:
+        """Reconstruct a lightweight Session from a rendered session markdown file.
+
+        Only the fields needed for homepage stats and month-index tables are
+        populated (title, agent, model, start_time, project_dir, token_usage).
+        """
+        text = filepath.read_text(encoding="utf-8", errors="replace")
+        if not text.startswith("---"):
+            return None
+        end = text.find("---", 3)
+        if end == -1:
+            return None
+        try:
+            fm = yaml.safe_load(text[3:end]) or {}
+        except yaml.YAMLError:
+            return None
+
+        agent_name = fm.get("agent", "")
+        date_val = fm.get("date")
+        if not agent_name or not date_val:
+            return None
+
+        try:
+            start_time = datetime.strptime(str(date_val), "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+
+        tokens = fm.get("tokens") or {}
+        inp = tokens.get("input", 0) if isinstance(tokens, dict) else 0
+        out = tokens.get("output", 0) if isinstance(tokens, dict) else 0
+        messages = []
+        if inp or out:
+            messages.append(Message(role="assistant", content="",
+                                    token_usage={"input": inp, "output": out}))
+
+        return Session(
+            id=filepath.stem,
+            agent_name=agent_name,
+            title=str(fm.get("title", filepath.stem)),
+            start_time=start_time,
+            messages=messages,
+            model=fm.get("model"),
+            project_dir=fm.get("project"),
+        )
+
+    def _load_all_sessions(self, docs_dir: Path) -> List[Session]:
+        """Load lightweight Session objects from every rendered session file on disk."""
+        sessions: List[Session] = []
+        month_re = re.compile(r"^\d{4}-\d{2}$")
+        for month_dir in docs_dir.iterdir():
+            if not month_dir.is_dir() or not month_re.match(month_dir.name):
+                continue
+            for agent_dir in month_dir.iterdir():
+                if not agent_dir.is_dir():
+                    continue
+                for md_file in agent_dir.glob("*.md"):
+                    s = self._session_from_frontmatter(md_file)
+                    if s:
+                        sessions.append(s)
+        return sessions
+
     def render_all(self, sessions: List[Session], output_dir: Path) -> None:
         docs_dir = output_dir / "docs"
         docs_dir.mkdir(parents=True, exist_ok=True)
 
-        by_month: Dict[str, List[Session]] = defaultdict(list)
-
+        # Write individual session files for newly-parsed sessions
         for session in sessions:
             month = session.start_time.strftime("%Y-%m")
-            by_month[month].append(session)
-
             session_dir = docs_dir / month / session.agent_name
             session_dir.mkdir(parents=True, exist_ok=True)
             session_file = session_dir / f"{session.id}.md"
             session_file.write_text(self.render_session(session))
+
+        # Rebuild homepage and month indices from the full on-disk archive
+        all_sessions = self._load_all_sessions(docs_dir)
+
+        by_month: Dict[str, List[Session]] = defaultdict(list)
+        for s in all_sessions:
+            by_month[s.start_time.strftime("%Y-%m")].append(s)
 
         for month, month_sessions in by_month.items():
             index_file = docs_dir / month / "index.md"
             index_file.write_text(self.render_month_index(month, month_sessions))
 
         homepage = docs_dir / "index.md"
-        homepage.write_text(self.render_homepage(sessions))
+        homepage.write_text(self.render_homepage(all_sessions))

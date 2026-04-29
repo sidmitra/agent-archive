@@ -1,4 +1,5 @@
 # src/agent_archive/site_builder.py
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -78,8 +79,9 @@ class SiteBuilder:
 
         nav.append({"Home": "index.md"})
 
+        month_re = re.compile(r"^\d{4}-\d{2}$")
         months = sorted(
-            [d for d in self.docs_dir.iterdir() if d.is_dir() and d.name != "site"],
+            [d for d in self.docs_dir.iterdir() if d.is_dir() and month_re.match(d.name)],
             reverse=True,
         )
         for month_dir in months:
