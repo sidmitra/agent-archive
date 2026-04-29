@@ -15,13 +15,16 @@ class SiteBuilder:
     def generate_config(self) -> None:
         nav = self._build_nav()
         self._write_tooltip_js()
+        self._write_theme_overrides()
 
+        overrides_dir = self.output_dir / "overrides"
         config = {
             "site_name": "Agent Archive",
             "docs_dir": str(self.docs_dir),
             "site_dir": str(self.output_dir / "site"),
             "theme": {
                 "name": "dracula",
+                "custom_dir": str(overrides_dir),
             },
             "plugins": ["search"],
             "extra_javascript": ["js/nav-tooltips.js"],
@@ -118,6 +121,12 @@ class SiteBuilder:
 }})();
 """
         )
+
+    def _write_theme_overrides(self) -> None:
+        """Write theme override templates (e.g. blank footer)."""
+        overrides_dir = self.output_dir / "overrides" / "modules"
+        overrides_dir.mkdir(parents=True, exist_ok=True)
+        (overrides_dir / "footer.html").write_text("")
 
     def build(self) -> None:
         subprocess.run(
