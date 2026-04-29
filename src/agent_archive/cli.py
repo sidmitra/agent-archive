@@ -85,7 +85,7 @@ def serve(
     port: int = typer.Option(8000, help="Port to serve on"),
     no_browser: bool = typer.Option(False, "--no-browser", help="Don't open a browser tab automatically"),
 ):
-    """Serve the built site locally so search works (file:// doesn't support fetch)."""
+    """Serve the HTML archive locally."""
     site_dir = output / "site"
     if not site_dir.exists():
         typer.echo(f"Site directory not found: {site_dir}. Run 'sync' first.", err=True)
