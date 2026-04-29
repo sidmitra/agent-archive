@@ -7,6 +7,7 @@ from .parsers.claude_code import ClaudeCodeParser
 from .parsers.pi import PiParser
 from .parsers.opencode import OpencodeParser
 from .parsers.copilot import CopilotParser
+from .redactor import Redactor
 from .renderer import MarkdownRenderer
 from .site_builder import SiteBuilder
 from .state import SyncState
@@ -26,6 +27,7 @@ def sync(
     pi_path: Optional[Path] = typer.Option(None, help="Override pi agent log directory"),
     opencode_db: Optional[Path] = typer.Option(None, help="Override opencode database path"),
     copilot_path: Optional[Path] = typer.Option(None, help="Override copilot log directory"),
+    redact: bool = typer.Option(True, help="Redact secrets (tokens, API keys, env var values) before writing output"),
 ):
     """Sync agent logs and build MkDocs site."""
     output.mkdir(parents=True, exist_ok=True)
@@ -55,8 +57,12 @@ def sync(
 
     if all_sessions:
         typer.echo(f"Parsed {len(all_sessions)} sessions")
+        sessions_to_render = all_sessions
+        if redact:
+            sessions_to_render = Redactor().redact_sessions(all_sessions)
+            typer.echo("Redacted secrets from sessions")
         renderer = MarkdownRenderer()
-        renderer.render_all(all_sessions, output)
+        renderer.render_all(sessions_to_render, output)
         typer.echo("Rendered Markdown files")
     else:
         typer.echo("No new sessions to sync")
