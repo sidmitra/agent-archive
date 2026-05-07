@@ -92,7 +92,7 @@ def test_js_dir_not_in_nav(tmp_path):
     sessions = [_make_session()]
     renderer.render_all(sessions, tmp_path)
 
-    session_file = tmp_path / "docs" / "2023-06" / "claude_code" / "sess1.md"
+    session_file = tmp_path / "docs" / "2023-06" / "claude_code" / "2023-06-15-sess1.md"
     assert session_file.exists()
     content = session_file.read_text()
     assert "Fix auth bug" in content

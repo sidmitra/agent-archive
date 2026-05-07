@@ -328,7 +328,8 @@ class MarkdownRenderer:
             month = session.start_time.strftime("%Y-%m")
             session_dir = docs_dir / month / session.agent_name
             session_dir.mkdir(parents=True, exist_ok=True)
-            session_file = session_dir / f"{session.id}.md"
+            date_prefix = session.start_time.strftime("%Y-%m-%d")
+            session_file = session_dir / f"{date_prefix}-{session.id}.md"
             session_file.write_text(self.render_session(session))
 
         # Rebuild homepage and month indices from the full on-disk archive
