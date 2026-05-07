@@ -62,9 +62,22 @@ class ClaudeCodeParser(BaseParser):
                     if role == "user":
                         for block in content:
                             if block.get("type") == "tool_result":
+                                block_content = block.get("content", "")
+                                if isinstance(block_content, list):
+                                    parts = []
+                                    for item in block_content:
+                                        if item.get("type") == "text":
+                                            parts.append(item.get("text", ""))
+                                        elif item.get("type") == "tool_reference":
+                                            parts.append(f"[tool_reference: {item.get('tool_name', '')}]")
+                                        else:
+                                            parts.append(json.dumps(item))
+                                    block_content = "\n\n".join(parts)
+                                elif not isinstance(block_content, str):
+                                    block_content = json.dumps(block_content)
                                 messages.append(Message(
                                     role="tool_result",
-                                    content=block.get("content", ""),
+                                    content=block_content,
                                     timestamp=ts,
                                 ))
                     elif role == "assistant":

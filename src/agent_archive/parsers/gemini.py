@@ -106,6 +106,10 @@ class GeminiParser(BaseParser):
                         # Tool result
                         result = tc.get("result", [])
                         result_text = tc.get("resultDisplay", "")
+                        if isinstance(result_text, dict):
+                            result_text = result_text.get("fileDiff", "") or json.dumps(result_text)
+                        elif not isinstance(result_text, str):
+                            result_text = str(result_text)
                         if not result_text and result:
                             # Extract text from nested functionResponse if present
                             try:
