@@ -92,7 +92,7 @@ class MarkdownRenderer:
             lines.append("")
             lines.append("| Session | Date | Model | Tokens |")
             lines.append("|---------|------|-------|--------|")
-            for s in sorted(by_agent[agent_name], key=lambda x: x.start_time):
+            for s in sorted(by_agent[agent_name], key=lambda x: x.start_time, reverse=True):
                 date = s.start_time.strftime("%Y-%m-%d %H:%M")
                 model = s.model or "—"
                 total_in = sum(m.token_usage.get("input", 0) for m in s.messages if m.token_usage)

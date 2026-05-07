@@ -86,17 +86,21 @@ class SiteBuilder:
         )
         for month_dir in months:
             month_items = [{"Overview": f"{month_dir.name}/index.md"}]
-            for agent_dir in sorted(month_dir.iterdir()):
-                if agent_dir.is_dir():
-                    for session_file in sorted(agent_dir.glob("*.md")):
-                        label = self._build_nav_label(session_file)
-                        rel_path = f"{month_dir.name}/{agent_dir.name}/{session_file.name}"
-                        month_items.append({label: rel_path})
+            all_session_files = [
+                f
+                for agent_dir in month_dir.iterdir()
+                if agent_dir.is_dir()
+                for f in agent_dir.glob("*.md")
+            ]
+            for session_file in sorted(all_session_files, key=lambda f: f.name, reverse=True):
+                label = self._build_nav_label(session_file)
+                rel_path = f"{month_dir.name}/{session_file.parent.name}/{session_file.name}"
+                month_items.append({label: rel_path})
 
-                        fm = self._parse_frontmatter(session_file)
-                        project = fm.get("project", "")
-                        if project:
-                            self._nav_tooltips[label] = project
+                fm = self._parse_frontmatter(session_file)
+                project = fm.get("project", "")
+                if project:
+                    self._nav_tooltips[label] = project
             nav.append({month_dir.name: month_items})
 
         return nav
