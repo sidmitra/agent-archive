@@ -54,9 +54,14 @@ def test_info_messages_skipped():
     parser = GeminiParser(base_path=FIXTURES)
     filepath = FIXTURES / "test-project" / "chats" / "session-2024-03-10T09-00-abc12345.json"
     session = parser.parse(filepath)[0]
-    roles = [m.role for m in session.messages]
-    # info messages must not appear
-    assert all(r in ("user", "assistant", "tool_result") for r in roles)
+    # info messages are now emitted as meta events, not regular messages
+    meta_msgs = [m for m in session.messages if m.role == "meta"]
+    assert len(meta_msgs) == 1
+    assert meta_msgs[0].meta_subtype == "info"
+    assert meta_msgs[0].content == "Gemini CLI v1.0.0"
+    # No raw info messages in the regular stream
+    roles = [m.role for m in session.messages if m.role in ("user", "assistant", "tool_result")]
+    assert "info" not in roles
 
 
 def test_user_messages_parsed():

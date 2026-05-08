@@ -65,8 +65,18 @@ class CopilotParser(BaseParser):
                         cwd = ctx.get("cwd")
 
                 elif etype == "session.model_change":
+                    new_model = data.get("newModel", "")
+                    previous = data.get("previousModel", "")
                     if model is None:
-                        model = data.get("newModel")
+                        model = new_model
+                    else:
+                        messages.append(Message(
+                            role="meta",
+                            meta_subtype="model_change",
+                            content=f"Switched model to **{new_model}**" +
+                                    (f" (from {previous})" if previous else ""),
+                            timestamp=ts,
+                        ))
 
                 elif etype == "user.message":
                     content = data.get("content", "")

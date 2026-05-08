@@ -22,6 +22,7 @@ class ClaudeCodeParser(BaseParser):
         messages: List[Message] = []
         slug = None
         model = None
+        last_model = None
         cwd = None
         session_id = None
         first_ts = None
@@ -34,9 +35,6 @@ class ClaudeCodeParser(BaseParser):
                     continue
                 record = json.loads(line)
                 record_type = record.get("type")
-
-                if record_type not in ("user", "assistant"):
-                    continue
 
                 ts_str = record.get("timestamp")
                 ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00")) if ts_str else None
@@ -51,6 +49,32 @@ class ClaudeCodeParser(BaseParser):
                     cwd = record.get("cwd")
                 if session_id is None:
                     session_id = record.get("sessionId")
+
+                # ── Meta events ──────────────────────────────────────────
+
+                if record_type == "system":
+                    subtype = record.get("subtype", "")
+                    if subtype == "turn_duration":
+                        duration_s = (record.get("durationMs", 0) or 0) / 1000
+                        messages.append(Message(
+                            role="meta",
+                            meta_subtype="turn_duration",
+                            content=f"Turn completed in **{duration_s:.1f}s**",
+                            timestamp=ts,
+                        ))
+                    # skip other system subtypes (init, permission, etc.)
+                    continue
+
+                if record_type == "file-history-snapshot":
+                    # skip — not useful for reading
+                    continue
+
+                if record_type == "last-prompt":
+                    # skip — internal marker
+                    continue
+
+                if record_type not in ("user", "assistant"):
+                    continue
 
                 msg = record.get("message", {})
                 role = msg.get("role", record_type)
@@ -82,8 +106,17 @@ class ClaudeCodeParser(BaseParser):
                                 ))
                     elif role == "assistant":
                         msg_model = msg.get("model")
-                        if msg_model and model is None:
-                            model = msg_model
+                        if msg_model:
+                            if model is None:
+                                model = msg_model
+                            elif msg_model != last_model and last_model is not None:
+                                messages.append(Message(
+                                    role="meta",
+                                    meta_subtype="model_change",
+                                    content=f"Switched model to **{msg_model}**",
+                                    timestamp=ts,
+                                ))
+                            last_model = msg_model
                         usage = msg.get("usage")
                         token_usage = None
                         if usage:

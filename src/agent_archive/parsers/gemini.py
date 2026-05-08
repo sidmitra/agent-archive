@@ -43,6 +43,7 @@ class GeminiParser(BaseParser):
 
         messages: List[Message] = []
         model: Optional[str] = None
+        last_model: Optional[str] = None
         title: Optional[str] = None
 
         for msg in data.get("messages", []):
@@ -54,8 +55,17 @@ class GeminiParser(BaseParser):
                 else None
             )
 
-            # Skip info/system messages
+            # ── Meta events ──────────────────────────────────────────
+
             if msg_type == "info":
+                content = msg.get("content", "")
+                if content:
+                    messages.append(Message(
+                        role="meta",
+                        meta_subtype="info",
+                        content=str(content),
+                        timestamp=ts,
+                    ))
                 continue
 
             if msg_type == "user":
@@ -73,8 +83,18 @@ class GeminiParser(BaseParser):
                 messages.append(Message(role="user", content=text, timestamp=ts))
 
             elif msg_type == "gemini":
-                if model is None:
-                    model = msg.get("model")
+                msg_model = msg.get("model")
+                if msg_model:
+                    if model is None:
+                        model = msg_model
+                    elif msg_model != last_model and last_model is not None:
+                        messages.append(Message(
+                            role="meta",
+                            meta_subtype="model_change",
+                            content=f"Switched model to **{msg_model}**",
+                            timestamp=ts,
+                        ))
+                    last_model = msg_model
 
                 tokens = msg.get("tokens", {})
                 token_usage = None

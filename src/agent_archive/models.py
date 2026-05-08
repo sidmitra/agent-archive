@@ -9,6 +9,7 @@ class Message(BaseModel):
     timestamp: Optional[datetime] = None
     tool_name: Optional[str] = None
     token_usage: Optional[dict] = None
+    meta_subtype: Optional[str] = None  # e.g., "model_change", "thinking_level_change", "compaction", "branch_summary", "session_info"
 
 
 class Session(BaseModel):

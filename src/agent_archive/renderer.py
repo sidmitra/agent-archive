@@ -18,6 +18,19 @@ AGENT_DISPLAY = {
     "copilot": "Copilot",
 }
 
+# (icon, label, mkdocs-admonition-type)
+_META_STYLE = {
+    "model_change":           ("🔄", "Model Change",       "info"),
+    "thinking_level_change":  ("🧠", "Thinking Level",     "info"),
+    "compaction":             ("🗜️", "Compaction",         "note"),
+    "branch_summary":         ("🌿", "Branch Switch",      "note"),
+    "session_info":           ("📝", "Session Info",       "note"),
+    "label":                  ("🏷️", "Bookmark",           "note"),
+    "turn_duration":          ("⏱️", "Turn Duration",      "tip"),
+    "info":                   ("ℹ️", "System Info",        "note"),
+    "custom":                 ("🔌", "Extension Event",    "note"),
+}
+
 
 class MarkdownRenderer:
     def render_session(self, session: Session) -> str:
@@ -72,6 +85,15 @@ class MarkdownRenderer:
             elif msg.role == "tool_result":
                 lines.append(f"**Tool Result** ({ts_str})")
                 lines.append(f"```\n{msg.content}\n```")
+            elif msg.role == "meta":
+                subtype = msg.meta_subtype or "event"
+                icon, label, admonition = _META_STYLE.get(
+                    subtype,
+                    ("ℹ️", subtype.replace("_", " ").title(), "note"),
+                )
+                lines.append(f'!!! {admonition} "{icon} {label} ({ts_str})"')
+                for content_line in msg.content.split("\n"):
+                    lines.append(f"    {content_line}")
 
             lines.append("")
 

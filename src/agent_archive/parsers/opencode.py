@@ -29,6 +29,7 @@ class OpencodeParser(BaseParser):
             session_id = row["id"]
             messages: List[Message] = []
             model = None
+            last_model = None
 
             for msg_row in conn.execute(
                 "SELECT * FROM message WHERE session_id = ? ORDER BY time_created",
@@ -39,10 +40,19 @@ class OpencodeParser(BaseParser):
                 ts_ms = msg_data.get("time", {}).get("created")
                 ts = datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc) if ts_ms else None
 
-                if model is None:
-                    model_info = msg_data.get("model", {})
-                    if isinstance(model_info, dict):
-                        model = model_info.get("modelID")
+                msg_model_info = msg_data.get("model", {})
+                msg_model = msg_model_info.get("modelID") if isinstance(msg_model_info, dict) else None
+                if msg_model:
+                    if model is None:
+                        model = msg_model
+                    elif msg_model != last_model and last_model is not None:
+                        messages.append(Message(
+                            role="meta",
+                            meta_subtype="model_change",
+                            content=f"Switched model to **{msg_model}**",
+                            timestamp=ts,
+                        ))
+                    last_model = msg_model
 
                 token_usage = None
                 tokens = msg_data.get("tokens")

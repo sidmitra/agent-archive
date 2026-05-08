@@ -42,20 +42,90 @@ class PiParser(BaseParser):
                         first_ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
                     continue
 
+                ts_str = record.get("timestamp")
+                ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00")) if ts_str else None
+                if ts:
+                    if first_ts is None:
+                        first_ts = ts
+
+                # ── Meta events ──────────────────────────────────────────
+
                 if record_type == "model_change":
+                    provider = record.get("provider", "")
+                    model_id = record.get("modelId", "")
                     if model is None:
-                        model = record.get("modelId")
+                        model = model_id
+                    else:
+                        messages.append(Message(
+                            role="meta",
+                            meta_subtype="model_change",
+                            content=f"Switched model to **{provider}/{model_id}**",
+                            timestamp=ts,
+                        ))
+                    continue
+
+                if record_type == "thinking_level_change":
+                    level = record.get("thinkingLevel", "")
+                    messages.append(Message(
+                        role="meta",
+                        meta_subtype="thinking_level_change",
+                        content=f"Thinking level set to **{level}**",
+                        timestamp=ts,
+                    ))
+                    continue
+
+                if record_type == "compaction":
+                    summary = record.get("summary", "")
+                    tokens_before = record.get("tokensBefore", 0)
+                    messages.append(Message(
+                        role="meta",
+                        meta_subtype="compaction",
+                        content=f"Context compacted — {tokens_before} tokens summarized." +
+                                (f"\n\n> {summary}" if summary else ""),
+                        timestamp=ts,
+                    ))
+                    continue
+
+                if record_type == "branch_summary":
+                    summary = record.get("summary", "")
+                    from_id = record.get("fromId", "")
+                    messages.append(Message(
+                        role="meta",
+                        meta_subtype="branch_summary",
+                        content=f"Branch switched (from {from_id})" +
+                                (f"\n\n> {summary}" if summary else ""),
+                        timestamp=ts,
+                    ))
+                    continue
+
+                if record_type == "session_info":
+                    name = record.get("name", "")
+                    if name:
+                        messages.append(Message(
+                            role="meta",
+                            meta_subtype="session_info",
+                            content=f"Session named **{name}**",
+                            timestamp=ts,
+                        ))
+                    continue
+
+                if record_type == "label":
+                    label = record.get("label")
+                    target_id = record.get("targetId", "")
+                    if label:
+                        messages.append(Message(
+                            role="meta",
+                            meta_subtype="label",
+                            content=f"Bookmark **{label}** set on {target_id}",
+                            timestamp=ts,
+                        ))
                     continue
 
                 if record_type != "message":
                     continue
 
-                ts_str = record.get("timestamp")
-                ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00")) if ts_str else None
                 if ts:
                     last_ts = ts
-                    if first_ts is None:
-                        first_ts = ts
 
                 msg = record.get("message", {})
                 role = msg.get("role", "")
@@ -104,6 +174,44 @@ class PiParser(BaseParser):
                         content=text,
                         timestamp=ts,
                         tool_name=msg.get("toolName"),
+                    ))
+
+                elif role == "bashExecution":
+                    output = msg.get("output", "")
+                    command = msg.get("command", "")
+                    if msg.get("excludeFromContext"):
+                        # !!-prefixed commands are hidden from LLM context
+                        messages.append(Message(
+                            role="tool_result",
+                            content=output,
+                            timestamp=ts,
+                            tool_name="bash",
+                        ))
+
+                elif role == "custom":
+                    custom_type = msg.get("customType", "")
+                    if custom_type:
+                        messages.append(Message(
+                            role="meta",
+                            meta_subtype="custom",
+                            content=f"Extension event: **{custom_type}**",
+                            timestamp=ts,
+                        ))
+
+                elif role == "branchSummary":
+                    messages.append(Message(
+                        role="meta",
+                        meta_subtype="branch_summary",
+                        content=f"Branch summary: {msg.get('summary', '')}",
+                        timestamp=ts,
+                    ))
+
+                elif role == "compactionSummary":
+                    messages.append(Message(
+                        role="meta",
+                        meta_subtype="compaction",
+                        content=f"Context compacted: {msg.get('summary', '')}",
+                        timestamp=ts,
                     ))
 
         if not messages:
