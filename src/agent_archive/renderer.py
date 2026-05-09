@@ -58,6 +58,7 @@ class MarkdownRenderer:
         header_parts = [f"**Agent:** {display_name}"]
         if session.model:
             header_parts.append(f"**Model:** {session.model}")
+        header_parts.append(f"**Date:** {session.start_time.strftime('%B %d, %Y')}")
         if session.end_time and session.start_time:
             duration = session.end_time - session.start_time
             minutes = int(duration.total_seconds() / 60)
