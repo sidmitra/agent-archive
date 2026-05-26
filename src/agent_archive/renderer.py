@@ -33,7 +33,7 @@ _META_STYLE = {
 
 
 class MarkdownRenderer:
-    def render_session(self, session: Session) -> str:
+    def render_session(self, session: Session, source_filename: Optional[str] = None) -> str:
         lines = []
 
         total_input = sum(m.token_usage.get("input", 0) for m in session.messages if m.token_usage)
@@ -64,6 +64,8 @@ class MarkdownRenderer:
             minutes = int(duration.total_seconds() / 60)
             if minutes > 0:
                 header_parts.append(f"**Duration:** {minutes}m")
+        if source_filename:
+            header_parts.append(f"[📄 Raw]({source_filename})")
         lines.append(" | ".join(header_parts))
         if session.project_dir:
             lines.append(f"**Project:** {session.project_dir}")
@@ -353,7 +355,7 @@ class MarkdownRenderer:
             session_dir.mkdir(parents=True, exist_ok=True)
             date_prefix = session.start_time.strftime("%Y-%m-%d")
             session_file = session_dir / f"{date_prefix}-{session.id}.md"
-            session_file.write_text(self.render_session(session))
+            session_file.write_text(self.render_session(session, source_filename=session_file.name))
 
         # Rebuild homepage and month indices from the full on-disk archive
         all_sessions = self._load_all_sessions(docs_dir)

@@ -1,6 +1,7 @@
 # src/agent_archive/site_builder.py
 import json
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -142,3 +143,11 @@ class SiteBuilder:
             check=True,
             cwd=self.output_dir,
         )
+        # Copy every source .md file into the site directory so that
+        # "📄 Raw" links in the HTML pages resolve correctly.
+        site_dir = self.output_dir / "site"
+        for md_src in self.docs_dir.rglob("*.md"):
+            rel = md_src.relative_to(self.docs_dir)
+            dest = site_dir / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(md_src, dest)
