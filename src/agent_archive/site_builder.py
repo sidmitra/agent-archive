@@ -24,8 +24,12 @@ class SiteBuilder:
             "docs_dir": str(self.docs_dir),
             "site_dir": str(self.output_dir / "site"),
             "theme": {
-                "name": "dracula",
+                "name": "mkdocs",
                 "custom_dir": str(overrides_dir),
+                "color_mode": "auto",
+                "user_color_mode_toggle": True,
+                "hljs_style": "github",
+                "hljs_style_dark": "github-dark",
             },
             "plugins": ["search"],
             "use_directory_urls": False,
@@ -106,7 +110,8 @@ class SiteBuilder:
 
     def _write_theme_overrides(self) -> None:
         """Write theme override templates (e.g. blank footer)."""
-        overrides_dir = self.output_dir / "overrides" / "modules"
+        # The default mkdocs theme keeps its footer in partials/footer.html
+        overrides_dir = self.output_dir / "overrides" / "partials"
         overrides_dir.mkdir(parents=True, exist_ok=True)
         (overrides_dir / "footer.html").write_text("")
 
