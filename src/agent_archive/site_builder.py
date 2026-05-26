@@ -1,4 +1,5 @@
 # src/agent_archive/site_builder.py
+import json
 import re
 import subprocess
 import sys
@@ -15,7 +16,6 @@ class SiteBuilder:
 
     def generate_config(self) -> None:
         nav = self._build_nav()
-        self._write_tooltip_js()
         self._write_theme_overrides()
 
         overrides_dir = self.output_dir / "overrides"
@@ -28,7 +28,6 @@ class SiteBuilder:
                 "custom_dir": str(overrides_dir),
             },
             "plugins": ["search"],
-            "extra_javascript": ["js/nav-tooltips.js"],
             "use_directory_urls": False,
         }
         if nav:
@@ -105,16 +104,18 @@ class SiteBuilder:
 
         return nav
 
-    def _write_tooltip_js(self) -> None:
-        """Write a JS file that adds title attributes to nav links."""
-        import json
-
-        js_dir = self.docs_dir / "js"
-        js_dir.mkdir(parents=True, exist_ok=True)
+    def _write_theme_overrides(self) -> None:
+        """Write theme override templates (e.g. blank footer)."""
+        overrides_dir = self.output_dir / "overrides" / "modules"
+        overrides_dir.mkdir(parents=True, exist_ok=True)
+        (overrides_dir / "footer.html").write_text("")
 
         tooltips = getattr(self, "_nav_tooltips", {})
-        (js_dir / "nav-tooltips.js").write_text(
-            f"""(function() {{
+        main_html = f"""{{% extends "base.html" %}}
+{{% block scripts %}}
+{{{{ super() }}}}
+<script>
+(function() {{
   var tips = {json.dumps(tooltips)};
   document.addEventListener('DOMContentLoaded', function() {{
     document.querySelectorAll('nav a, .md-nav a, .sidebar a, [data-md-component="navigation"] a').forEach(function(a) {{
@@ -125,14 +126,10 @@ class SiteBuilder:
     }});
   }});
 }})();
+</script>
+{{% endblock %}}
 """
-        )
-
-    def _write_theme_overrides(self) -> None:
-        """Write theme override templates (e.g. blank footer)."""
-        overrides_dir = self.output_dir / "overrides" / "modules"
-        overrides_dir.mkdir(parents=True, exist_ok=True)
-        (overrides_dir / "footer.html").write_text("")
+        (self.output_dir / "overrides" / "main.html").write_text(main_html)
 
     def build(self) -> None:
         subprocess.run(
