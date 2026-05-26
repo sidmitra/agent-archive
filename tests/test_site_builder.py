@@ -24,7 +24,7 @@ def test_generate_mkdocs_yml(tmp_path):
 
     config = yaml.safe_load(config_path.read_text())
     assert config["site_name"] == "Agent Archive"
-    assert config["theme"]["name"] == "dracula"
+    assert config["theme"]["name"] == "mkdocs"
     assert "search" in str(config.get("plugins", []))
 
 

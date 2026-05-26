@@ -27,7 +27,7 @@ def main():
 
 @app.command()
 def sync(
-    output: Path = typer.Option(..., help="Output directory for the markdown files and static site"),
+    output: Path = typer.Option(..., help="Output directory for the markdown files"),
     claude_path: Optional[Path] = typer.Option(None, help="Override Claude Code log directory"),
     pi_path: Optional[Path] = typer.Option(None, help="Override pi agent log directory"),
     opencode_db: Optional[Path] = typer.Option(None, help="Override opencode database path"),
@@ -35,7 +35,7 @@ def sync(
     copilot_path: Optional[Path] = typer.Option(None, help="Override copilot log directory"),
     redact: bool = typer.Option(True, help="Redact secrets (tokens, API keys, env var values) before writing output"),
 ):
-    """Sync agent logs and build MkDocs site."""
+    """Extract agent sessions and write them as Markdown files."""
     output.mkdir(parents=True, exist_ok=True)
 
     state = SyncState(_state_path(output))
@@ -74,12 +74,22 @@ def sync(
     else:
         typer.echo("No new sessions to sync")
 
+    state.save()
+
+
+@app.command()
+def build(
+    output: Path = typer.Option(..., help="Output directory produced by 'sync'"),
+):
+    """Generate MkDocs config and build the static site from synced Markdown files."""
+    if not output.exists():
+        typer.echo(f"Output directory not found: {output}. Run 'sync' first.", err=True)
+        raise typer.Exit(1)
+
     builder = SiteBuilder(output)
     builder.generate_config()
     builder.build()
     typer.echo("Site built successfully")
-
-    state.save()
 
 
 @app.command()

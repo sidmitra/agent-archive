@@ -1,7 +1,6 @@
 # tests/test_sync_integration.py
 import json
 from pathlib import Path
-from unittest.mock import patch
 from typer.testing import CliRunner
 from agent_archive.cli import app
 from agent_archive.state import _state_path
@@ -21,15 +20,14 @@ def test_sync_creates_markdown(tmp_path):
 
     output_dir = tmp_path / "output"
 
-    with patch("agent_archive.cli.SiteBuilder.build"):
-        result = runner.invoke(app, [
-            "sync",
-            "--output", str(output_dir),
-            "--claude-path", str(tmp_path / "claude"),
-            "--pi-path", str(tmp_path / "pi"),
-            "--opencode-db", str(tmp_path / "opencode.db"),
-            "--copilot-path", str(tmp_path / "copilot"),
-        ])
+    result = runner.invoke(app, [
+        "sync",
+        "--output", str(output_dir),
+        "--claude-path", str(tmp_path / "claude"),
+        "--pi-path", str(tmp_path / "pi"),
+        "--opencode-db", str(tmp_path / "opencode.db"),
+        "--copilot-path", str(tmp_path / "copilot"),
+    ])
 
     assert result.exit_code == 0, result.output
 
