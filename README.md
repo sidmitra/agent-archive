@@ -2,7 +2,7 @@
 
 Archive and browse agentic coding sessions. Parses session logs from multiple agents and generates a searchable MkDocs static site.
 
-![Agent Archive screenshot](screenshot.png)
+![Agent Archive screenshot](screenshot.jpg)
 
 **Supported agents:** Claude Code, Gemini CLI, Pi, OpenCode, GitHub Copilot
 
