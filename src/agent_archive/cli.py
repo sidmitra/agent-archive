@@ -3,9 +3,10 @@ import http.server
 import os
 import threading
 import webbrowser
-import typer
+from importlib.metadata import version as _pkg_version
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
+import typer
 
 from .parsers.claude_code import ClaudeCodeParser
 from .parsers.gemini import GeminiParser
@@ -17,12 +18,20 @@ from .renderer import MarkdownRenderer
 from .site_builder import SiteBuilder
 from .state import SyncState, _state_path
 
-app = typer.Typer()
+app = typer.Typer(invoke_without_command=True)
 
 
 @app.callback()
-def main():
+def main(
+    version: Annotated[
+        bool,
+        typer.Option("--version", "-V", help="Print version and exit.", is_eager=True),
+    ] = False,
+) -> None:
     """Archive and browse agentic coding sessions."""
+    if version:
+        typer.echo(_pkg_version("agent-archive"))
+        raise typer.Exit()
 
 
 # ---------------------------------------------------------------------------
