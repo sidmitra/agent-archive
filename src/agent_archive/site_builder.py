@@ -117,8 +117,25 @@ class SiteBuilder:
         overrides_dir.mkdir(parents=True, exist_ok=True)
         (overrides_dir / "footer.html").write_text("")
 
+        # Create custom CSS directory and file for sidebar truncation
+        css_dir = self.output_dir / "overrides" / "css"
+        css_dir.mkdir(parents=True, exist_ok=True)
+        custom_css = """
+/* Fix sidebar link overflow - truncate long nav items with ellipsis */
+.bs-sidebar .nav > li > a {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+"""
+        (css_dir / "custom.css").write_text(custom_css)
+
         tooltips = getattr(self, "_nav_tooltips", {})
         main_html = f"""{{% extends "base.html" %}}
+{{% block styles %}}
+{{{{ super() }}}}
+<link rel="stylesheet" href="../css/custom.css">
+{{% endblock %}}
 {{% block scripts %}}
 {{{{ super() }}}}
 <script>
