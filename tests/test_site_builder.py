@@ -28,6 +28,52 @@ def test_generate_mkdocs_yml(tmp_path):
     assert "search" in str(config.get("plugins", []))
 
 
+def test_raw_link_uses_raw_subdir(tmp_path):
+    """render_all should emit Raw links pointing to _raw/{filename}, not
+    the rendered file itself, so MkDocs cannot resolve and rewrite them."""
+    from agent_archive.renderer import MarkdownRenderer
+    from agent_archive.models import Message, Session
+    from datetime import datetime, timezone
+
+    session = Session(
+        id="sess1",
+        agent_name="claude_code",
+        title="Fix auth bug",
+        start_time=datetime(2023, 6, 15, 10, 0, tzinfo=timezone.utc),
+        messages=[Message(role="user", content="Fix it")],
+    )
+    renderer = MarkdownRenderer()
+    renderer.render_all([session], tmp_path)
+
+    session_file = tmp_path / "docs" / "2023-06" / "claude_code" / "2023-06-15-sess1.md"
+    content = session_file.read_text()
+    assert "[\U0001f4c4 Raw](_raw/2023-06-15-sess1.md)" in content
+
+
+def test_build_copies_md_to_raw_subdir(tmp_path):
+    """build() should copy .md source files into _raw/ sibling subdirs in site."""
+    docs_dir = tmp_path / "docs"
+    session_dir = docs_dir / "2023-06" / "claude_code"
+    session_dir.mkdir(parents=True)
+    (session_dir / "2023-06-15-sess1.md").write_text("# Session")
+    (docs_dir / "index.md").write_text("# Home")
+
+    builder = SiteBuilder(tmp_path)
+    builder.generate_config()
+
+    with patch("agent_archive.site_builder.subprocess.run"):
+        # mkdocs is mocked; manually create the site structure it would produce
+        site_dir = tmp_path / "site"
+        (site_dir / "2023-06" / "claude_code").mkdir(parents=True)
+        (site_dir / "2023-06" / "claude_code" / "2023-06-15-sess1.html").write_text("<html/>")
+        builder.build()
+
+    raw_dest = site_dir / "2023-06" / "claude_code" / "_raw" / "2023-06-15-sess1.md"
+    assert raw_dest.exists()
+    # The .md file should NOT be copied to the old sibling location
+    assert not (site_dir / "2023-06" / "claude_code" / "2023-06-15-sess1.md").exists()
+
+
 def test_build_site(tmp_path):
     docs_dir = tmp_path / "docs"
     docs_dir.mkdir()

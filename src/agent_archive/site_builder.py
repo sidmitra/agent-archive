@@ -34,6 +34,7 @@ class SiteBuilder:
             },
             "plugins": ["search"],
             "use_directory_urls": False,
+            "validation": {"links": {"not_found": "ignore"}},
         }
         if nav:
             config["nav"] = nav
@@ -143,11 +144,13 @@ class SiteBuilder:
             check=True,
             cwd=self.output_dir,
         )
-        # Copy every source .md file into the site directory so that
-        # "📄 Raw" links in the HTML pages resolve correctly.
+        # Copy every source .md file into a sibling _raw/ subdirectory so
+        # that "📄 Raw" links resolve to the .md source.  The links use the
+        # _raw/ prefix so MkDocs cannot resolve them as docs files and
+        # therefore leaves the .md href untouched during the build.
         site_dir = self.output_dir / "site"
         for md_src in self.docs_dir.rglob("*.md"):
             rel = md_src.relative_to(self.docs_dir)
-            dest = site_dir / rel
+            dest = site_dir / rel.parent / "_raw" / rel.name
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(md_src, dest)

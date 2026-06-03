@@ -355,7 +355,7 @@ class MarkdownRenderer:
             session_dir.mkdir(parents=True, exist_ok=True)
             date_prefix = session.start_time.strftime("%Y-%m-%d")
             session_file = session_dir / f"{date_prefix}-{session.id}.md"
-            session_file.write_text(self.render_session(session, source_filename=session_file.name))
+            session_file.write_text(self.render_session(session, source_filename=f"_raw/{session_file.name}"))
 
         # Rebuild homepage and month indices from the full on-disk archive
         all_sessions = self._load_all_sessions(docs_dir)
