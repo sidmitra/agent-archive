@@ -64,11 +64,14 @@ class MarkdownRenderer:
             minutes = int(duration.total_seconds() / 60)
             if minutes > 0:
                 header_parts.append(f"**Duration:** {minutes}m")
-        if source_filename:
-            header_parts.append(f"[📄 Raw]({source_filename})")
-        lines.append(" | ".join(header_parts))
+        lines.append(" | ".join(header_parts) + "  ")
+        second_line_parts = []
         if session.project_dir:
-            lines.append(f"**Project:** {session.project_dir}")
+            second_line_parts.append(f"**Project:** {session.project_dir}")
+        if source_filename:
+            second_line_parts.append(f"[📄 Raw]({source_filename})")
+        if second_line_parts:
+            lines.append(" | ".join(second_line_parts))
         lines.append("")
         lines.append("---")
         lines.append("")
