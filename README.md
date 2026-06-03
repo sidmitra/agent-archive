@@ -34,16 +34,16 @@ uv sync
 
 ### Sync
 
-Parse agent logs and build the site:
+Parse agent logs and generate Markdown files in `~/ai-sessions/docs`:
 
 ```bash
-agent-archive sync --output ~/archive
+agent-archive sync --output ~/ai-sessions
 ```
 
 Agent log directories are auto-discovered at their default locations. Override any of them:
 
 ```bash
-agent-archive sync --output ~/archive \
+agent-archive sync --output ~/ai-sessions \
   --claude-path ~/.claude \
   --pi-path ~/.pi/agent \
   --opencode-db ~/.local/share/opencode/opencode.db \
@@ -56,7 +56,15 @@ Only sessions that have changed since the last sync are re-parsed (incremental).
 **Secret redaction** is on by default — API keys, tokens, and env var values are replaced with `REDACTED` in the rendered output. To disable:
 
 ```bash
-agent-archive sync --output ~/archive --no-redact
+agent-archive sync --output ~/ai-sessions --no-redact
+```
+
+### Build
+
+Generate the MkDocs config and build the static HTML site in `~/ai-sessions/site`:
+
+```bash
+agent-archive build --output ~/ai-sessions
 ```
 
 ### Serve
@@ -64,13 +72,13 @@ agent-archive sync --output ~/archive --no-redact
 Open the archive in a browser:
 
 ```bash
-agent-archive serve --output ~/archive
+agent-archive serve --output ~/ai-sessions
 ```
 
 This starts a local HTTP server (default port 8000) and opens a browser tab. A server is required because the site uses JavaScript for search.
 
 ```bash
-agent-archive serve --output ~/archive --port 9000 --no-browser
+agent-archive serve --output ~/ai-sessions --port 9000 --no-browser
 ```
 
 ## Sharing across multiple machines
@@ -80,13 +88,14 @@ You can point all your machines at the same output directory synced via Dropbox,
 On each machine, run sync independently:
 
 ```bash
-agent-archive sync --output ~/Dropbox/archive
+agent-archive sync --output ~/Dropbox/ai-sessions
 ```
 
-Sessions from all machines accumulate in the shared archive. Run `serve` on whichever machine you want to browse from:
+Sessions from all machines accumulate in the shared archive. On any machine where you want to browse, build and serve:
 
 ```bash
-agent-archive serve --output ~/Dropbox/archive
+agent-archive build --output ~/Dropbox/ai-sessions
+agent-archive serve --output ~/Dropbox/ai-sessions
 ```
 
 ## Development
