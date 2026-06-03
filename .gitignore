@@ -1,8 +1,9 @@
+*.egg-info/
+*.pyc
+.DS_Store
+.claude/
+.pytest_cache/
 .worktrees/
 __pycache__/
-*.pyc
-.pytest_cache/
-*.egg-info/
-dist/
 build/
-.claude/
+dist/
