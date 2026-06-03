@@ -32,9 +32,34 @@ uv sync
 
 ## Usage
 
-### Sync
+### Quick start
 
-Parse agent logs and generate Markdown files in `~/ai-sessions/docs`:
+The `run` command syncs, builds, and serves the archive in one step:
+
+```bash
+agent-archive run --output ~/ai-sessions
+```
+
+This is equivalent to running `sync`, `build`, and `serve` in sequence. It accepts all the same flags as the individual commands:
+
+```bash
+agent-archive run --output ~/ai-sessions \
+  --claude-path ~/.claude \
+  --pi-path ~/.pi/agent \
+  --opencode-db ~/.local/share/opencode/opencode.db \
+  --gemini-path ~/.gemini/tmp \
+  --copilot-path ~/.copilot \
+  --port 9000 \
+  --no-browser
+```
+
+### Individual commands
+
+Use the individual commands when you need more control — for example, to sync on one machine and serve on another, or to rebuild without re-syncing.
+
+#### Sync
+
+Parse agent logs and write Markdown files into `<output>/docs`:
 
 ```bash
 agent-archive sync --output ~/ai-sessions
@@ -59,23 +84,23 @@ Only sessions that have changed since the last sync are re-parsed (incremental).
 agent-archive sync --output ~/ai-sessions --no-redact
 ```
 
-### Build
+#### Build
 
-Generate the MkDocs config and build the static HTML site in `~/ai-sessions/site`:
+Generate the MkDocs config and build the static HTML site into `<output>/site`:
 
 ```bash
 agent-archive build --output ~/ai-sessions
 ```
 
-### Serve
+#### Serve
 
-Open the archive in a browser:
+Start a local HTTP server and open the archive in a browser:
 
 ```bash
 agent-archive serve --output ~/ai-sessions
 ```
 
-This starts a local HTTP server (default port 8000) and opens a browser tab. A server is required because the site uses JavaScript for search.
+A local server is required because the site uses JavaScript for search. Default port is 8000.
 
 ```bash
 agent-archive serve --output ~/ai-sessions --port 9000 --no-browser
@@ -91,11 +116,17 @@ On each machine, run sync independently:
 agent-archive sync --output ~/Dropbox/ai-sessions
 ```
 
-Sessions from all machines accumulate in the shared archive. On any machine where you want to browse, build and serve:
+Sessions from all machines accumulate in the shared archive. To browse from any machine, build and serve:
 
 ```bash
 agent-archive build --output ~/Dropbox/ai-sessions
 agent-archive serve --output ~/Dropbox/ai-sessions
+```
+
+Or use the shortcut:
+
+```bash
+agent-archive run --output ~/Dropbox/ai-sessions
 ```
 
 ## Development
@@ -110,7 +141,7 @@ uv run pytest
 
 ```
 src/agent_archive/
-  cli.py              # Typer CLI (sync, serve)
+  cli.py              # Typer CLI (run, sync, build, serve)
   models.py           # Pydantic models (Session, Message)
   redactor.py         # Secret redaction
   renderer.py         # Markdown + MkDocs site generation
