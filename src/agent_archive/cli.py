@@ -13,6 +13,7 @@ from .parsers.gemini import GeminiParser
 from .parsers.pi import PiParser
 from .parsers.opencode import OpencodeParser
 from .parsers.copilot import CopilotParser
+from .parsers.antigravity import AntigravityParser
 from .redactor import Redactor
 from .renderer import MarkdownRenderer
 from .site_builder import SiteBuilder
@@ -45,6 +46,7 @@ def _sync(
     opencode_db: Optional[Path] = None,
     gemini_path: Optional[Path] = None,
     copilot_path: Optional[Path] = None,
+    antigravity_path: Optional[Path] = None,
     redact: bool = True,
 ) -> None:
     output.mkdir(parents=True, exist_ok=True)
@@ -55,6 +57,7 @@ def _sync(
         OpencodeParser(db_path=opencode_db),
         GeminiParser(base_path=gemini_path),
         CopilotParser(base_path=copilot_path),
+        AntigravityParser(base_path=antigravity_path),
     ]
     all_sessions = []
     for parser in parsers:
@@ -123,10 +126,11 @@ def sync(
     opencode_db: Optional[Path] = typer.Option(None, help="Override opencode database path"),
     gemini_path: Optional[Path] = typer.Option(None, help="Override Gemini CLI session directory"),
     copilot_path: Optional[Path] = typer.Option(None, help="Override copilot log directory"),
+    antigravity_path: Optional[Path] = typer.Option(None, help="Override antigravity log directory"),
     redact: bool = typer.Option(True, help="Redact secrets (tokens, API keys, env var values) before writing output"),
 ):
     """Extract agent sessions and write them as Markdown files."""
-    _sync(output, claude_path, pi_path, opencode_db, gemini_path, copilot_path, redact)
+    _sync(output, claude_path, pi_path, opencode_db, gemini_path, copilot_path, antigravity_path, redact)
 
 
 @app.command()
@@ -155,13 +159,14 @@ def run(
     opencode_db: Optional[Path] = typer.Option(None, help="Override opencode database path"),
     gemini_path: Optional[Path] = typer.Option(None, help="Override Gemini CLI session directory"),
     copilot_path: Optional[Path] = typer.Option(None, help="Override copilot log directory"),
+    antigravity_path: Optional[Path] = typer.Option(None, help="Override antigravity log directory"),
     redact: bool = typer.Option(True, help="Redact secrets before writing output"),
     port: int = typer.Option(8000, help="Port to serve on"),
     no_browser: bool = typer.Option(False, "--no-browser", help="Don't open a browser tab automatically"),
 ):
     """Sync, build, and serve the archive in one step."""
     typer.echo("--- sync ---")
-    _sync(output, claude_path, pi_path, opencode_db, gemini_path, copilot_path, redact)
+    _sync(output, claude_path, pi_path, opencode_db, gemini_path, copilot_path, antigravity_path, redact)
     typer.echo("--- build ---")
     _build(output)
     typer.echo("--- serve ---")
