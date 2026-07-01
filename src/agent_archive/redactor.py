@@ -18,6 +18,8 @@ _LITERAL_PATTERNS: List[re.Pattern] = [
     # GitHub tokens: ghp_, ghs_, gho_, ghu_, github_pat_
     re.compile(r'gh[psoua]_[A-Za-z0-9]{36,}'),
     re.compile(r'github_pat_[A-Za-z0-9_]{80,}'),
+    # SendGrid API keys: SG.<public>.<secret>
+    re.compile(r'SG\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{20,}'),
     # AWS access key IDs
     re.compile(r'AKIA[0-9A-Z]{16}'),
     # Generic "Bearer <token>" (HTTP Authorization headers)
@@ -33,7 +35,7 @@ _SECRET_VAR_RE = re.compile(
 
 # Shell env var assignment: [export ]VARNAME=value  (value up to whitespace or end-of-line)
 _ENV_ASSIGN_RE = re.compile(
-    r'((?:export\s+)?[A-Za-z_][A-Za-z0-9_]*)(=)(\S+)',
+    r'((?:export\s+)?[A-Za-z_][A-Za-z0-9_]*)(=)\s*(\S+)',
 )
 
 # JSON/YAML key-value pairs: "key": "value"  or  key: value  (quoted and bare)

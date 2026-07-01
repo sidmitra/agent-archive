@@ -88,6 +88,12 @@ class TestEnvVarAssignments:
         result = _redact_text(text)
         assert result == text
 
+    def test_assignment_with_space_after_equals(self):
+        text = "SENDGRID_API_KEY= 'SG.ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'"
+        result = _redact_text(text)
+        assert "SG." not in result
+        assert "REDACTED" in result
+
 
 class TestJsonKeyValuePairs:
     def test_api_key_json(self):
